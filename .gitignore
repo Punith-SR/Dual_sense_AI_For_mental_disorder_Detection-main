@@ -3,7 +3,7 @@ __pycache__/
 venv/
 .env
 .DS_Store
-*.h5
+# *.h5  ← Comment this out or delete it
 *.keras
 uploads/*
 !uploads/.gitkeep
