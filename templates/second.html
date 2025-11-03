@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dual Sense AI - Quick Guide</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            min-height: 100vh; margin: 0;
+            background: linear-gradient(135deg, #92FFC0 0%, #002661 100%);
+            display: grid; place-items: center; padding: 2rem 1rem;
+        }
+        .guide-container {
+            width: min(950px, 96%);
+            background: rgba(255,255,255,0.97);
+            border-radius: 20px; padding: 38px 26px;
+            box-shadow: 0 20px 52px rgba(0,0,0,0.14);
+            backdrop-filter: blur(7px);
+        }
+        .title {
+            font-family: 'Montserrat', sans-serif; font-weight: 800;
+            color: #123c5a; font-size: 2.1rem; margin-bottom: 1.5em;
+            letter-spacing: 1.23px;
+        }
+        .category-list { display: flex; flex-wrap: wrap; gap: 26px; justify-content: center; margin-bottom: 30px; }
+        .category {
+            background: #f4f9ff;
+            padding: 22px 32px;
+            border-radius: 14px;
+            font-size: 1.09rem;
+            color: #18537c;
+            box-shadow: 0 8px 30px rgba(0,0,0,.06);
+            min-width: 210px;
+            font-family: 'Poppins', Arial, sans-serif;
+            flex: 1 1 210px;
+        }
+        .info { margin-top: 5px; color:#507ba1; font-size: 0.98em;}
+        .next-button {
+            margin-top: 32px; padding: 14px 42px;
+            background: linear-gradient(90deg, #005bea, #00c6fb);
+            color: #fff; border-radius: 10px; border: none;
+            font-weight: 700; font-size:1.09rem; letter-spacing: 1.5px; cursor:pointer; text-decoration: none; box-shadow: 0 8px 18px rgba(0,115,239,0.09);
+            transition: background 0.14s, transform 0.14s;
+        }
+        .next-button:hover { background: linear-gradient(90deg, #00c6fb, #005bea); transform: scale(1.08);}
+        @media(max-width: 650px) {
+            .category-list { flex-direction: column; gap: 16px; }
+            .guide-container { padding: 14px 4vw;}
+            .title { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="guide-container">
+        <div class="title"><i class="fa-solid fa-book-open-reader me-2"></i>Quick Guide</div>
+        <div class="category-list">
+            <div class="category"><b>Stress</b><div class="info">State of mental or emotional strain caused by challenging circumstances.</div></div>
+            <div class="category"><b>No Stress</b><div class="info">A calm and relaxed mental state with no emotional strain.</div></div>
+            <div class="category"><b>Depressed</b><div class="info">Persistent sadness, loss of interest in activities, low energy.</div></div>
+            <div class="category"><b>Not Depressed</b><div class="info">Mentally balanced and not experiencing depression symptoms.</div></div>
+            <div class="category"><b>Anxiety</b><div class="info">Excessive worry, fear, or nervousness.</div></div>
+        </div>
+        <a href="/main" class="next-button">
+            <i class="fa-solid fa-location-arrow me-2"></i>Navigate to Main
+        </a>
+    </div>
+</body>
+</html>

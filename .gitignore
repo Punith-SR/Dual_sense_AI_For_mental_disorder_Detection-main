@@ -1,0 +1,9 @@
+*.pyc
+__pycache__/
+venv/
+.env
+.DS_Store
+*.h5
+*.keras
+uploads/*
+!uploads/.gitkeep

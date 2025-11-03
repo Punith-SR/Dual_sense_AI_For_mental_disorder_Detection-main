@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual Sense AI for Mental Disorder Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            background: linear-gradient(135deg, #daf3ff 0%, #c2e9fb 40%, #8fd6fc 100%);
+            margin: 0; min-height: 100vh;
+        }
+        .themed-header {
+            background: linear-gradient(90deg, #00c6fb, #005bea);
+            color: #fff;
+            text-align: center;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800; font-size: 2rem;
+            box-shadow: 0 4px 32px rgba(0,0,0,0.13);
+            padding: 2rem 0 1rem 0;
+            letter-spacing: 0.8px;
+        }
+        .description {
+            text-align: center;
+            margin: 32px auto 12px auto;
+            color: #24416b;
+            font-size: 1.13rem;
+            max-width: 700px;
+        }
+        .disorder-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 22px 0 32px 0;
+        }
+        .disorder-box {
+            background: #fff;
+            color: #22a4e3;
+            border-radius: 1.5em;
+            padding: .75em 2.32em;
+            font-weight: 700;
+            font-size: 1.05rem;
+            box-shadow: 0 4px 15px rgba(0,140,255,0.08);
+            border: 1.5px solid #e6ecfa;
+            transition: 0.15s;
+        }
+        .disorder-box:hover { 
+            box-shadow: 0 12px 21px rgba(0,140,255,0.18); 
+            transform: scale(1.06);
+        }
+        .container-custom {
+            max-width: 1280px; margin: 0 auto; padding: 0 1rem;
+            display: flex; flex-wrap: wrap; gap: 28px; justify-content: center;
+        }
+        .block {
+            flex: 1 1 298px; max-width: 390px; min-width: 270px;
+            background: #fff; border-radius: 22px;
+            text-align: center; padding: 32px 18px 26px 18px;
+            box-shadow: 0 10px 48px rgba(0,89,234,0.13);
+            margin-bottom: 14px; transition: transform 0.16s, box-shadow 0.16s;
+            position: relative; z-index: 10;
+        }
+        .block:hover {
+            transform: translateY(-6px) scale(1.018);
+            box-shadow: 0 18px 54px rgba(0,89,234,0.17);
+        }
+        .block h2 {
+            font-size: 1.23rem;
+            font-family: 'Montserrat', Arial, sans-serif; 
+            margin-bottom: 0.6em; 
+            color: #164b76;
+            font-weight: 700; 
+            display: flex; 
+            align-items: center; 
+            gap:.52em; 
+            justify-content: center;
+        }
+        .block i { 
+            color: #00c6fb; 
+            font-size: 1.45em;
+        }
+        .block p { 
+            font-size: 1.08rem; 
+            color: #426279; 
+            min-height: 46px;
+        }
+        .block button, .file-button {
+            margin-top: 14px; 
+            padding: 11px 21px;
+            background: linear-gradient(90deg, #00c6fb, #005bea); 
+            color: #fff;
+            border: none; 
+            border-radius: 1.2em; 
+            cursor: pointer;
+            font-size: 1em; 
+            font-weight: 600; 
+            box-shadow: 0 6px 19px rgba(44,105,237,0.13);
+            transition: background 0.15s, transform 0.15s;
+        }
+        .block button:hover, .file-button:hover {
+            background: linear-gradient(90deg, #005bea, #00c6fb); 
+            filter: brightness(1.09); 
+            transform: scale(1.05);
+        }
+        input[type="file"] { 
+            display: none; 
+        }
+        #voiceStatus, #voiceResult, #faceResult, #combinedResult {
+            font-size: .98rem; 
+            font-weight: 500; 
+            color: #888; 
+            transition: color 0.14s;
+        }
+        
+        /* FIXED VIDEO STYLES */
+        .video-container {
+            width: 100%;
+            text-align: center;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .video-container.active {
+            display: block;
+        }
+        
+        #video {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 12px;
+            background: #000;
+            margin: 10px auto;
+            border: 3px solid #00c6fb;
+            box-shadow: 0 8px 24px rgba(0, 198, 251, 0.3);
+        }
+        
+        #canvas {
+            display: none;
+        }
+        
+        @media (max-width: 1100px) { 
+            .container-custom { gap: 18px; } 
+        }
+        @media (max-width: 800px) {
+            .container-custom { 
+                flex-direction: column; 
+                gap: 16px; 
+                align-items: center;
+            }
+            .block { 
+                max-width: 98vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="themed-header">
+        <i class="fa-solid fa-brain me-2"></i>Dual Sense AI for Mental Disorder Detection
+    </header>
+    
+    <div class="description">
+        <p><strong>Mental Disorders Overview:</strong></p>
+        <p>This AI system analyzes both facial expressions and speech patterns to detect potential mental disorders. The following are the key disorders it identifies:</p>
+    </div>
+    
+    <div class="disorder-list">
+        <div class="disorder-box">Stress</div>
+        <div class="disorder-box">No Stress</div>
+        <div class="disorder-box">Depressed</div>
+        <div class="disorder-box">Not Depressed</div>
+        <div class="disorder-box">Anxiety</div>
+    </div>
+    
+    <div class="container-custom">
+        <!-- Face Detection Block -->
+        <div class="block">
+            <h2><i class="fa-solid fa-face-smile"></i>Face-Based Detection</h2>
+            <p>Analyze facial expressions to detect potential mental health markers.</p>
+            
+            <!-- Video element - FIXED -->
+            <div class="video-container">
+                <video id="video" autoplay muted playsinline></video>
+                <canvas id="canvas"></canvas>
+            </div>
+            
+            <!-- Buttons -->
+            <button id="run-face"><i class="fa-solid fa-video me-2"></i>Start Face Detection</button>
+            <button id="stop-face" style="background: linear-gradient(90deg, #e85d5d, #c41e3a); display: none;">
+                <i class="fa-solid fa-stop me-2"></i>Stop Detection
+            </button>
+            
+            <p id="faceResult" class="mt-2">Detected from Face: Waiting for detection...</p>
+        </div>
+        
+        <!-- Voice Recognition Block -->
+        <div class="block">
+            <h2><i class="fa-solid fa-microphone-lines"></i>Speech-Based Analysis</h2>
+            <p>Process speech patterns to assess emotional and mental states.</p>
+            <label for="csvFile" class="file-button mb-2"><i class="fa-solid fa-file-csv me-2"></i>Choose CSV File</label>
+            <input type="file" id="csvFile" accept=".csv" onchange="loadCSV(event)">
+            <button onclick="recognizeSpeech()" class="mt-2"><i class="fa-solid fa-microphone me-2"></i>Start Speech Recognition</button>
+            <p id="voiceStatus">Click "Start Speech Recognition" and speak.</p>
+            <p id="voiceResult">Detected from Voice: Waiting for input...</p>
+        </div>
+        
+        <!-- Combined Result Block -->
+        <div class="block">
+            <h2><i class="fa-solid fa-link"></i>Combined Result</h2>
+            <p id="combinedResult">Results will appear here once both methods are processed.</p>
+        </div>
+    </div>
+    
+    <script>
+        let faceResult = "";
+        let voiceResult = "";
+        let video = document.getElementById('video');
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let detectionInterval;
+        
+        document.getElementById('run-face').onclick = function() {
+            startFaceDetection();
+        };
+        
+        document.getElementById('stop-face').onclick = function() {
+            stopFaceDetection();
+        };
+        
+        function startFaceDetection() {
+            console.log("Starting face detection...");
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    console.log("✅ Camera access granted!");
+                    video.srcObject = stream;
+                    
+                    // SHOW VIDEO ELEMENT - FIXED
+                    const videoContainer = document.querySelector('.video-container');
+                    videoContainer.classList.add('active');
+                    
+                    document.getElementById('run-face').style.display = 'none';
+                    document.getElementById('stop-face').style.display = 'block';
+                    document.getElementById('faceResult').textContent = "🎥 Detecting...";
+                    
+                    video.onloadedmetadata = function() {
+                        console.log("✅ Video loaded!");
+                        console.log("Video dimensions:", video.videoWidth, "x", video.videoHeight);
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        sendFramesToServer();
+                    };
+                })
+                .catch(err => {
+                    console.error("❌ Camera error:", err);
+                    alert("❌ Camera access denied: " + err.message);
+                    document.getElementById('faceResult').textContent = "Error: " + err.message;
+                });
+        }
+        
+        function sendFramesToServer() {
+            detectionInterval = setInterval(() => {
+                try {
+                    ctx.drawImage(video, 0, 0);
+                    
+                    canvas.toBlob(blob => {
+                        let formData = new FormData();
+                        formData.append('image', blob, 'frame.jpg');
+                        
+                        fetch('/predict', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.emotion) {
+                                faceResult = data.emotion;
+                                const confidence = (data.confidence * 100).toFixed(2);
+                                document.getElementById('faceResult').innerHTML = 
+                                    `😊 Detected: <strong>${data.emotion}</strong><br>
+                                     Confidence: ${confidence}%`;
+                                checkResults();
+                            }
+                        })
+                        .catch(error => console.error('Prediction error:', error));
+                    }, 'image/jpeg', 0.9);
+                } catch(e) {
+                    console.error("Frame capture error:", e);
+                }
+            }, 500);
+        }
+        
+        function stopFaceDetection() {
+            console.log("Stopping face detection...");
+            clearInterval(detectionInterval);
+            
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            
+            const videoContainer = document.querySelector('.video-container');
+            videoContainer.classList.remove('active');
+            
+            document.getElementById('run-face').style.display = 'block';
+            document.getElementById('stop-face').style.display = 'none';
+            document.getElementById('faceResult').textContent = "Detected from Face: Stopped";
+        }
+        
+        function checkResults() {
+            const combinedResult = document.getElementById("combinedResult");
+            if (faceResult && voiceResult) {
+                if (faceResult.toLowerCase() === voiceResult.toLowerCase()) {
+                    combinedResult.innerHTML = `
+                        <i class="fa-solid fa-circle-check" style="color: #28a745;"></i><br>
+                        Matched Disorder: <strong style="color: #28a745;">${faceResult}</strong>
+                    `;
+                    combinedResult.style.color = "#28a745";
+                } else {
+                    combinedResult.innerHTML = `
+                        <i class="fa-solid fa-circle-xmark" style="color: #e36262;"></i><br>
+                        Face: ${faceResult} | Voice: ${voiceResult}
+                    `;
+                    combinedResult.style.color = "#e36262";
+                }
+            }
+        }
+        
+        let data;
+        
+        function loadCSV(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const text = e.target.result;
+                    data = parseCSV(text);
+                    if (data) {
+                        alert("✅ CSV file loaded successfully!");
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+        
+        function parseCSV(text) {
+            const lines = text.split("\n").filter(line => line.trim() !== "");
+            
+            if (lines.length === 0) {
+                alert("CSV file is empty!");
+                return null;
+            }
+            
+            const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+            const result = {};
+            
+            headers.forEach(header => {
+                result[header] = [];
+            });
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(",").map(v => v.trim());
+                headers.forEach((header, index) => {
+                    if (values[index] && values[index] !== "") {
+                        result[header].push(values[index].toLowerCase());
+                    }
+                });
+            }
+            
+            return result;
+        }
+        
+        function recognizeSpeech() {
+            if (!data) {
+                alert("❌ Please load a CSV file first!");
+                return;
+            }
+            
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            
+            recognition.onstart = function () {
+                document.getElementById("voiceStatus").textContent = "🎤 Listening...";
+            };
+            
+            recognition.onresult = function (event) {
+                const speechResult = event.results[0][0].transcript;
+                document.getElementById("voiceStatus").textContent = "✓ Recognized: " + speechResult;
+                matchToDisorder(speechResult);
+            };
+            
+            recognition.onerror = function (event) {
+                document.getElementById("voiceStatus").textContent = "❌ Error: " + event.error;
+            };
+            
+            recognition.start();
+        }
+        
+        function matchToDisorder(voiceInput) {
+            if (!data) {
+                alert("Please load a CSV file first.");
+                return;
+            }
+            
+            voiceInput = voiceInput.toLowerCase();
+            const matchedResults = [];
+            const emotions = Object.keys(data);
+            
+            emotions.forEach(emotion => {
+                const keywords = data[emotion] || [];
+                keywords.forEach(keyword => {
+                    if (keyword && voiceInput.includes(keyword)) {
+                        matchedResults.push(emotion);
+                    }
+                });
+            });
+            
+            if (matchedResults.length > 0) {
+                voiceResult = matchedResults[0];
+            } else {
+                voiceResult = "No match";
+            }
+            
+            document.getElementById('voiceResult').innerHTML = 
+                `😊 Detected from Voice: <strong>${voiceResult}</strong>`;
+            
+            checkResults();
+        }
+    </script>
+</body>
+</html>
