@@ -4,49 +4,49 @@ import numpy as np
 import io
 from PIL import Image
 import os
-import sys
+import warnings
+warnings.filterwarnings('ignore')
 
 app = Flask(__name__)
 
 # ============================================
-# LOAD YOUR MODEL - FIXED for Render!
+# LOAD MODEL - LIGHTWEIGHT VERSION
 # ============================================
 model = None
 
 def load_model_safe():
     global model
     try:
-        # Try TensorFlow first (for local testing)
-        try:
-            from tensorflow import keras
-            model = keras.models.load_model('model_file.h5')
-            print("✅ Model loaded with TensorFlow!")
-        except:
-            # Fallback: try basic keras
-            from keras.models import load_model as keras_load_model
-            model = keras_load_model('model_file.h5')
-            print("✅ Model loaded with Keras!")
+        # Try direct keras.saving first (lightweight!)
+        from keras import saving
+        model = saving.load_model('model.keras')
+        print("✅ Model loaded (Keras format)!")
+        return
+    except:
+        pass
+    
+    try:
+        # Try TensorFlow fallback
+        import tensorflow as tf
+        model = tf.keras.models.load_model('model.keras')
+        print("✅ Model loaded (TensorFlow)!")
+        return
+    except:
+        pass
+    
+    try:
+        # Last resort: try .h5
+        from keras.models import load_model
+        model = load_model('model_file.h5')
+        print("✅ Model loaded (.h5 format)!")
     except Exception as e:
-        print(f"❌ Error loading model: {e}")
+        print(f"❌ Model load failed: {e}")
         model = None
 
 # Load face detector
-try:
-    faceDetect = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    print("✅ Face detector loaded successfully!")
-except Exception as e:
-    print(f"❌ Error loading face detector: {e}")
-    faceDetect = None
+faceDetect = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-# Your emotion labels
-labels_dict = {
-    0: 'anxiety', 
-    1: 'depressed', 
-    2: 'not_depressed', 
-    3: 'nostress', 
-    4: 'stress'
-}
-
+labels_dict = {0: 'anxiety', 1: 'depressed', 2: 'not_depressed', 3: 'nostress', 4: 'stress'}
 current_label = ""
 
 # ============================================
@@ -78,8 +78,9 @@ def update_label():
     return jsonify({"status": "Label updated!"})
 
 # ============================================
-# PREDICT ROUTE - Browser Camera
+# PREDICT - EMOTION DETECTION
 # ============================================
+
 @app.route('/predict', methods=['POST'])
 def predict():
     global model
@@ -92,7 +93,7 @@ def predict():
             return jsonify({'error': 'Model not loaded', 'emotion': 'Error', 'success': False})
         
         if 'image' not in request.files:
-            return jsonify({'error': 'No image uploaded', 'emotion': 'Error', 'success': False})
+            return jsonify({'error': 'No image', 'emotion': 'Error', 'success': False})
         
         file = request.files['image']
         
@@ -102,49 +103,34 @@ def predict():
             gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
             faces = faceDetect.detectMultiScale(gray, 1.3, 5)
             
-            if faces is None or len(faces) == 0:
-                return jsonify({
-                    'emotion': 'No face detected',
-                    'confidence': 0,
-                    'success': False
-                })
+            if len(faces) == 0:
+                return jsonify({'emotion': 'No face', 'confidence': 0, 'success': False})
             
             x, y, w, h = faces[0]
-            face_roi = gray[y:y+h, x:x+w]
-            resized = cv2.resize(face_roi, (48, 48))
-            normalized = resized / 255.0
-            reshaped = np.reshape(normalized, (1, 48, 48, 1))
+            face = gray[y:y+h, x:x+w]
+            face = cv2.resize(face, (48, 48)) / 255.0
+            face = np.reshape(face, (1, 48, 48, 1))
             
-            result = model.predict(reshaped, verbose=0)
+            pred = model.predict(face, verbose=0)[0]
             
-            # Apply calibration
-            calibrated = result[0].copy()
-            calibrated[2] = calibrated[2] * 0.85  # not_depressed
-            calibrated[3] = calibrated[3] * 1.2   # nostress
-            calibrated = calibrated / np.sum(calibrated)
+            # Calibration
+            pred[2] *= 0.85
+            pred[3] *= 1.2
+            pred /= pred.sum()
             
-            emotion_label = np.argmax(calibrated)
-            confidence = float(calibrated[emotion_label])
-            current_label = labels_dict.get(emotion_label, 'Unknown')
+            emotion = labels_dict[np.argmax(pred)]
+            conf = float(pred.max())
             
-            print(f"✅ Detected: {current_label} (Confidence: {confidence:.2f})")
+            return jsonify({'emotion': emotion, 'confidence': conf, 'success': True})
             
-            return jsonify({
-                'emotion': current_label,
-                'confidence': confidence,
-                'success': True
-            })
-            
-        except Exception as inner_error:
-            print(f"Inner error: {inner_error}")
-            return jsonify({'error': f'Processing error: {str(inner_error)}', 'emotion': 'Error', 'success': False})
+        except Exception as e:
+            return jsonify({'error': str(e), 'emotion': 'Error', 'success': False})
             
     except Exception as e:
-        print(f"Error: {e}")
         return jsonify({'error': str(e), 'emotion': 'Error', 'success': False})
 
 # ============================================
-# RUN APP
+# RUN
 # ============================================
 
 if __name__ == '__main__':
