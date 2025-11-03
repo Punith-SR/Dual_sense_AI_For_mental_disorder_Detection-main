@@ -1,28 +1,42 @@
 from flask import Flask, render_template, request, jsonify
 import cv2
 import numpy as np
-from keras.models import load_model
 import io
 from PIL import Image
+import os
+import sys
 
 app = Flask(__name__)
 
 # ============================================
-# LOAD YOUR MODEL (Use relative paths!)
+# LOAD YOUR MODEL - FIXED for Render!
 # ============================================
-try:
-    model = load_model('model_file.h5')
-    print("✅ Model loaded successfully!")
-except Exception as e:
-    print(f"❌ Error loading model: {e}")
-    model = None
+model = None
 
-# Load face detector (relative path!)
+def load_model_safe():
+    global model
+    try:
+        # Try TensorFlow first (for local testing)
+        try:
+            from tensorflow import keras
+            model = keras.models.load_model('model_file.h5')
+            print("✅ Model loaded with TensorFlow!")
+        except:
+            # Fallback: try basic keras
+            from keras.models import load_model as keras_load_model
+            model = keras_load_model('model_file.h5')
+            print("✅ Model loaded with Keras!")
+    except Exception as e:
+        print(f"❌ Error loading model: {e}")
+        model = None
+
+# Load face detector
 try:
-    faceDetect = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    faceDetect = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     print("✅ Face detector loaded successfully!")
 except Exception as e:
     print(f"❌ Error loading face detector: {e}")
+    faceDetect = None
 
 # Your emotion labels
 labels_dict = {
@@ -36,7 +50,7 @@ labels_dict = {
 current_label = ""
 
 # ============================================
-# ROUTES - Your Original Routes
+# ROUTES
 # ============================================
 
 @app.route('/')
@@ -64,11 +78,16 @@ def update_label():
     return jsonify({"status": "Label updated!"})
 
 # ============================================
-# NEW ROUTE - Browser-Based Camera Prediction
+# PREDICT ROUTE - Browser Camera
 # ============================================
 @app.route('/predict', methods=['POST'])
 def predict():
+    global model
+    
     try:
+        if model is None:
+            load_model_safe()
+        
         if model is None:
             return jsonify({'error': 'Model not loaded', 'emotion': 'Error', 'success': False})
         
@@ -98,15 +117,10 @@ def predict():
             
             result = model.predict(reshaped, verbose=0)
             
-            # ✅ SOLUTION: Apply calibration to reduce not_depressed bias
-            # Reduce the confidence of not_depressed and nostress
+            # Apply calibration
             calibrated = result[0].copy()
-            
-            # Reduce not_depressed bias (it wins too often)
             calibrated[2] = calibrated[2] * 0.85  # not_depressed
-            calibrated[3] = calibrated[3] * 1.2   # boost nostress
-            
-            # Renormalize so they sum to 1
+            calibrated[3] = calibrated[3] * 1.2   # nostress
             calibrated = calibrated / np.sum(calibrated)
             
             emotion_label = np.argmax(calibrated)
@@ -129,10 +143,10 @@ def predict():
         print(f"Error: {e}")
         return jsonify({'error': str(e), 'emotion': 'Error', 'success': False})
 
-
 # ============================================
 # RUN APP
 # ============================================
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    load_model_safe()
+    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
